@@ -32,6 +32,9 @@ public class Url implements Serializable{
 	@XmlAttribute(name="param3")
 	private String param3;
 	
+	@XmlAttribute(name="carrydata")
+	private String carrydata;
+	
 	
 	
 
@@ -81,6 +84,13 @@ public class Url implements Serializable{
 
 	public void setParam2(String param2) {
 		this.param2 = param2;
+	}
+
+	public String getCarrydata() {
+		return carrydata;
+	}
+	public void setCarrydata(String carrydata) {
+		this.carrydata = carrydata;
 	}
 	
 	

@@ -1,9 +1,5 @@
 package com.dinfo.crawl.conf;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
@@ -13,18 +9,16 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.Element;
-import org.dom4j.io.SAXReader;
 import org.dom4j.tree.DefaultAttribute;
 
 import com.dinfo.crawl.URLBean;
 import com.dinfo.fetcher.bean.CrawlParameter;
 import com.dinfo.fetcher.bean.CrawlType;
-import com.dinfo.fetcher.bean.ProxyBean;
 import com.dinfo.parse.bean.IntelligentType;
 import com.dinfo.parse.bean.ParseParameter;
 import com.dinfo.parse.bean.ParseType;
@@ -60,8 +54,8 @@ public class ParseXML {
 				fin = new FileInputStream(file);
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
-			}*/
-			//Document doc= reader.read(fin);
+			}
+			Document doc = reader.read(fin);*/
 			Element root = doc.getRootElement();
 			System.out.println(root.getName());
 			List<Element> jobs = root.elements();
@@ -124,6 +118,7 @@ public class ParseXML {
 								List<String> columnList = getList(icolumns,";");
 								pagecon.setIcolumns(columnList);
 							}
+							
 							String repeattimes = urls.elementText("repeattimes");
 							if(StringUtils.isNotBlank(repeattimes)){
 								pagecon.setRepeattimes(repeattimes);
@@ -181,6 +176,23 @@ public class ParseXML {
 											}
 										}
 										
+										Map<String,String> dataMap = new HashMap<String,String>();   // 传入的携带参数
+										String carrydata = urlele.attributeValue("carrydata");  // 关键字
+										if(StringUtils.isNotBlank(carrydata)){
+											String[] datas = carrydata.split(";;");
+											if(datas!=null){
+												for(String data:datas){
+													String[] datam = data.split("::");
+													if(null != datam && datam.length==2){
+														String datakey = datam[0];
+														String dataval = datam[1];
+														dataMap.put(datakey, dataval);
+													}
+												}
+											}
+										}
+										
+										
 										
 										if(CollectionUtils.isNotEmpty(listlist)){
 											List<String> urlist = new ArrayList<String>();
@@ -202,6 +214,10 @@ public class ParseXML {
 													URLBean urlbean = new URLBean();
 													urlbean.setList(paraList);
 													urlbean.setUrl(burl);
+													urlbean.setBaseURL(burl);
+													if(MapUtils.isNotEmpty(dataMap)){
+														urlbean.setParaMap(dataMap);
+													}
 													urllist.add(urlbean);
 												}
 											}
@@ -218,12 +234,17 @@ public class ParseXML {
 											URLBean urlbean = new URLBean();
 											urlbean.setList(paraList);
 											urlbean.setUrl(urlf);
+											urlbean.setBaseURL(urlf);
+											if(MapUtils.isNotEmpty(dataMap)){
+												urlbean.setParaMap(dataMap);
+											}
 											urllist.add(urlbean);
 											
 										}
 									}else{
 										URLBean urlbean = new URLBean();
 										urlbean.setUrl(urlf);
+										urlbean.setBaseURL(urlf);
 										urllist.add(urlbean);
 									}
 									
@@ -264,8 +285,14 @@ public class ParseXML {
 											regMap.put(key, value);
 											continue;
 										}
+										
 										String fvalue = ele.getTextTrim();
-										addParsePara(fname, fvalue, parsePara);  
+										if("intelligent".equals(fvalue)){
+											addParsePara("isintelligent","true",parsePara);
+											addParsePara("intelltype","content",parsePara);
+										}else{
+											addParsePara(fname, fvalue, parsePara);  
+										}
 									 }
 									 parsePara.setExtractreg(regMap);
 									 parseList.add(parsePara);
@@ -284,7 +311,6 @@ public class ParseXML {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		
 		return configMap;
 	}
 	
@@ -326,10 +352,24 @@ public class ParseXML {
 				crawlPara.setReqmap(map);
 			}
 		}else if(name.equals("referrer")){
+			if(StringUtils.isNotBlank(value)){
+				crawlPara.setReferrer(value);
+			}
 			
 		}else if(name.equals("cookie")){
 			
 		}else if(name.equals("header")){
+			
+			if(StringUtils.isNotBlank(value)){
+				Map<String,String> map = new HashMap<String,String>();
+				List<String> list = getList(value,";");
+				for(String s:list){
+					String[] arr = s.split(":::");
+					map.put(arr[0], arr[1]);
+				}
+				crawlPara.setHeader(map);
+			}
+			
 			
 		}else if(name.equals("isUseWebClient")){
 			
@@ -338,8 +378,8 @@ public class ParseXML {
 		}else if(name.equals("isuseproxy")){
 			crawlPara.setUseProxy(getTrueOrFalse(value));
 		}else if(name.equals("proxyurl")){
-			//ProxyBean proxy = QueryProxy.testProxy(value);
-			//crawlPara.setProxyBean(proxy);
+			/*ProxyBean proxy = QueryProxy.testProxy(value);
+			crawlPara.setProxyBean(proxy);*/
 		}else if(name.equals("isignorecontenttype")){
 			crawlPara.setIsignorecontenttype(getTrueOrFalse(value));
 		}
@@ -443,3 +483,4 @@ public static ParseParameter addParsePara(String name,String value,ParseParamete
 	}
 
 }
+

@@ -20,6 +20,9 @@ public class Fetcher implements Serializable{
 	@XmlElement(name="reqmethod")
 	private String reqmethod;
 	
+	@XmlElement(name="header")
+	private String header;
+	
 	
 	
 	public String getReqmethod() {
@@ -55,7 +58,13 @@ public class Fetcher implements Serializable{
 		this.fetcherIsusejs = fetcherIsusejs;
 	}
 
-	
-	
+	public String getHeader() {
+		return header;
+	}
+
+	public void setHeader(String header) {
+		this.header = header;
+	}
+
 	
 }

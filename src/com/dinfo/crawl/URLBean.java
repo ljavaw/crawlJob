@@ -17,8 +17,9 @@ public class URLBean implements Serializable{
 	
 	private List<String> list;  // url拼装字段值  按MessageFormat 中的不确定字段进行填充
 	
-	private Map<String,String> paraMap;  //请求map
+	private Map<String,String> paraMap;  //上一层携带过来的map
 	
+	private String baseURL;
 	
 	public int getCount() {
 		return count;
@@ -50,6 +51,14 @@ public class URLBean implements Serializable{
 
 	public void setParaMap(Map<String, String> paraMap) {
 		this.paraMap = paraMap;
+	}
+
+	public void setBaseURL(String baseURL) {
+		this.baseURL = baseURL;
+	}
+
+	public String getBaseURL() {
+		return baseURL;
 	}
 
 }

@@ -34,6 +34,13 @@ public class UrlAndTemplateBean {
 	private String sourceCity;
 	
 	private Set<String> rowKeys;
+	
+	//以下为企业采集用
+	private String templateName;
+	
+	private String companyName;
+	
+	private String stockCode;
 
 	public String getTemplate_content_source() {
 		return template_content_source;
@@ -155,8 +162,28 @@ public class UrlAndTemplateBean {
 		this.rowKeys = rowKeys;
 	}
 
+	public String getTemplateName() {
+		return templateName;
+	}
 
+	public void setTemplateName(String templateName) {
+		this.templateName = templateName;
+	}
 
+	public String getCompanyName() {
+		return companyName;
+	}
+
+	public void setCompanyName(String companyName) {
+		this.companyName = companyName;
+	}
+
+	public String getStockCode() {
+		return stockCode;
+	}
+
+	public void setStockCode(String stockCode) {
+		this.stockCode = stockCode;
+	}
 	
-
 }

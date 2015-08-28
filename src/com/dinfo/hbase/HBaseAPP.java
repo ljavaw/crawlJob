@@ -28,6 +28,7 @@ import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 
+import com.dinfo.crawl.enterprise.EnterpriseReportBean;
 import com.dinfo.crawl.test.MyTest;
 
 public class HBaseAPP {
@@ -297,8 +298,10 @@ public class HBaseAPP {
  				HTable hTable = new HTable(conf, table_name);
  				Scan scan = new Scan();
  				//参数为（列簇，列名，CompareOp.EQUAL，条件）各个条件之间是" and "的关系
-				scan.setFilter(new SingleColumnValueFilter(family.getBytes(), 
- 						qualifier.getBytes(), CompareOp.EQUAL, Bytes.toBytes("0")));
+ 				if(qualifier != null && !("").equals(qualifier)){
+ 					scan.setFilter(new SingleColumnValueFilter(family.getBytes(), 
+ 							qualifier.getBytes(), CompareOp.EQUAL, Bytes.toBytes("0")));
+ 				}
 // 				scan.setFilter(new PageFilter(1000));
  				ResultScanner scanner = hTable.getScanner(scan);
  			
@@ -365,5 +368,47 @@ public class HBaseAPP {
 			}
 		}
 		return resultMap;
+	}
+	/**
+	 * 查询指定数据(企业数据表)
+	 */
+	@SuppressWarnings({"deprecation", "resource" })
+	public List<EnterpriseReportBean> getRecordEnterprise(String tableName, Set<String> rowKeys, List<String> familyNames, List<String> cellNames) throws IOException {
+		
+	
+		
+		
+		List<EnterpriseReportBean> reportBeanList = new ArrayList<EnterpriseReportBean>();//ENTERPRIS_REPORT_T查询bean
+		if(tableName != null && !("").equals(tableName)){
+			HTable hTable = new HTable(conf, tableName);
+			for(String rowKey : rowKeys){
+				Get get = new Get(rowKey.getBytes());
+				Result result = hTable.get(get);
+				for(String familyName : familyNames){
+					for(String cellName : cellNames){
+						byte[] value = result.getValue(familyName.getBytes(), cellName.getBytes());
+						if(value != null){
+							System.out.println("列族:"+ new String(familyName) + 
+									" 列:"+ new String(cellName) + 
+									" 值:"+ new String(value));
+							//status 0:文件未下载1:文件已下载&已解析入库(未同步)
+							if("status".equals(new String(cellName)) && "0".equals(new String(value))){
+								for(String cellNameTemp : cellNames){
+									if("remoteFilePath".equals(new String(cellNameTemp))){
+										byte[] valueTemp = result.getValue(familyName.getBytes(), cellNameTemp.getBytes());
+										EnterpriseReportBean bean = new EnterpriseReportBean();
+										bean.setRowKey(rowKey);
+										bean.setFamilyName(familyName);
+										bean.setRemoteFilePath(new String(valueTemp));
+										reportBeanList.add(bean);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return reportBeanList;
 	}
 }
