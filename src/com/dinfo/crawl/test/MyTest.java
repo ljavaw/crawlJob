@@ -11,6 +11,7 @@ import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import com.dinfo.crawl.enterprise.EnterprisePDFDownload;
 import com.dinfo.crawl.enterprise.EnterpriseTask1;
 import com.dinfo.mail.SendMailTask;
 
@@ -26,13 +27,13 @@ public class MyTest {
     
 	public void mainMethod(Map<String, String> configMap) {
     	
-    	MyTest test = new MyTest();
     	CRAWL_PROPERTIES = configMap;
     	String[] t1Array = CRAWL_PROPERTIES.get("timeTask1").split(",");
     	String[] t2Array = CRAWL_PROPERTIES.get("timeTask2").split(",");
     	String[] t3Array = CRAWL_PROPERTIES.get("timeTask3").split(",");
     	String[] timerSendMail = CRAWL_PROPERTIES.get("timerSendMail").split(",");
 
+    	MyTest test = new MyTest();
         Task1 task1 = new Task1();
 		test.timerManager(Integer.parseInt(t1Array[0]),Integer.parseInt(t1Array[1]),Integer.parseInt(t1Array[2]),task1);
 		Task2 task2 = new Task2();
@@ -46,7 +47,6 @@ public class MyTest {
 	
 	public static void main(String[] args) {
     	
-    	MyTest test = new MyTest();
     	CRAWL_PROPERTIES = parseProperties();
     	String[] t1Array = CRAWL_PROPERTIES.get("timeTask1").split(",");
     	String[] t2Array = CRAWL_PROPERTIES.get("timeTask2").split(",");
@@ -54,16 +54,21 @@ public class MyTest {
     	String[] et1Array = CRAWL_PROPERTIES.get("timeEnterpriseTask1").split(",");
     	String[] timerSendMail = CRAWL_PROPERTIES.get("timerSendMail").split(",");
 
+    	MyTest test = new MyTest();
 //    	Task1 task1 = new Task1();
 //		test.timerManager(Integer.parseInt(t1Array[0]),Integer.parseInt(t1Array[1]),Integer.parseInt(t1Array[2]),task1);
 //		Task2 task2 = new Task2();
 //		test.timerManager(Integer.parseInt(t2Array[0]),Integer.parseInt(t2Array[1]),Integer.parseInt(t2Array[2]),task2);
 //		Task3 task3 = new Task3();
 //		test.timerManager(Integer.parseInt(t3Array[0]),Integer.parseInt(t3Array[1]),Integer.parseInt(t3Array[2]),task3);
-		EnterpriseTask1 etask1 = new EnterpriseTask1();
-		test.timerManager(Integer.parseInt(et1Array[0]),Integer.parseInt(et1Array[1]),Integer.parseInt(et1Array[2]),etask1);
+//		EnterpriseTask1 etask1 = new EnterpriseTask1();
+//		test.timerManager(Integer.parseInt(et1Array[0]),Integer.parseInt(et1Array[1]),Integer.parseInt(et1Array[2]),etask1);
 //		SendMailTask sendMailTask = new SendMailTask();
 //		test.timerManager(Integer.parseInt(timerSendMail[0]),Integer.parseInt(timerSendMail[1]),Integer.parseInt(timerSendMail[2]),sendMailTask);
+		
+		EnterprisePDFDownload epd = new EnterprisePDFDownload();
+		epd.pdfDownload();
+	
 	}
 	/**
 	 * 定时器

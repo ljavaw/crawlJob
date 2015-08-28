@@ -1,5 +1,6 @@
 package com.dinfo.crawl.enterprise;
 
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -78,33 +79,32 @@ public class EnterpriseTask1 extends TimerTask {
 						tempJob.setJobName(jobName + UUID.randomUUID());
 						
 						//当id为2(上市公司列表(深交所主板))或者3(上市公司列表(深交所创业板))的模板时，进行url拼接
-						String tempTemplateName = result.getTemplateName().substring(result.getTemplateName().length()-2);
+						String tempTemplateName = result.getTemplateName().substring(result.getTemplateName().lastIndexOf("&")+1);
 						//以下数字的含义参看数据库模板表
 						if(("2").equals(tempTemplateName) || ("3").equals(tempTemplateName)){
-							String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
-							tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
-							
-							tempJob = getResultUrl1(tempJob, baseUrl);
-							crawl.getJobList().clear();// 清空job对象
-							//Crawl newCrawl = (Crawl) crawl.deepClone();
-							crawl.getJobList().add(tempJob);// 添加新job对象
-						}else if(("10").equals(tempTemplateName) || ("11").equals(tempTemplateName)){
-							String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
-							tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
-							
-							tempJob = getResultUrl3(tempJob, baseUrl);
+							tempJob = getResultUrl1(tempJob);
 							crawl.getJobList().clear();// 清空job对象
 							crawl.getJobList().add(tempJob);// 添加新job对象
+							
+						}else if(("10").equals(tempTemplateName)){
+							tempJob = getResultUrl2(tempJob);
+							crawl.getJobList().clear();// 清空job对象
+							crawl.getJobList().add(tempJob);// 添加新job对象
+							
+						}else if(("11").equals(tempTemplateName)){
+							tempJob = getResultUrl3(tempJob);
+							crawl.getJobList().clear();// 清空job对象
+							crawl.getJobList().add(tempJob);// 添加新job对象
+							
 						}else if(("12").equals(tempTemplateName) || ("15").equals(tempTemplateName)){
-							String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
-							tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
-							
-							tempJob = getResultUrl4(tempJob, baseUrl);
+							tempJob = getResultUrl4(tempJob);
+							crawl.getJobList().clear();// 清空job对象
+							crawl.getJobList().add(tempJob);// 添加新job对象
+						}else if(("5").equals(tempTemplateName) || ("6").equals(tempTemplateName)){
+							tempJob = getResultUrl5(tempJob);
 							crawl.getJobList().clear();// 清空job对象
 							crawl.getJobList().add(tempJob);// 添加新job对象
 						}
-						
-						
 						String xml = xmlUtil.convertToXml(crawl, "UTF-8");
 						// System.out.println("生成的新xml是："+xml+"\n==============end");
 						// util.stringToXml(xml,"D:/abc.xml");//输出xml文件
@@ -135,7 +135,11 @@ public class EnterpriseTask1 extends TimerTask {
 	 * @param tempJob
 	 * @param baseUrl
 	 */
-	public Job getResultUrl1(Job tempJob, String baseUrl){
+	public Job getResultUrl1(Job tempJob){
+		
+		String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
+		tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
+		
 		//根据实际情况进行修改
 		int pageCount = Integer.parseInt(baseUrl.split("tab1PAGECOUNT=")[1].substring(0, 2));
 		String baseUrl0 = baseUrl.split("tab1PAGENUM=")[0];
@@ -148,30 +152,45 @@ public class EnterpriseTask1 extends TimerTask {
 		return tempJob;
 	}
 	/**
-	 * 拼日期的url
+	 * 需要修改"公司名称"，"公司代码" 的url
 	 * @param tempJob
 	 * @param baseUrl
 	 */
-//	public Job getResultUrl2(Job tempJob, String baseUrl){
-//		//根据实际情况进行修改
-//		String startTime = baseUrl.split("startTime=")[1].substring(0, 9);
-//		String startTime = baseUrl.split("startTime=")[1].substring(0, 9);
-//		String baseUrl0 = baseUrl.split("tab1PAGENUM=")[0];
-//		String baseUrl1 = baseUrl.split("tab1PAGENUM=")[1].substring(1);
-//		for(int i=0; i<pageCount; i++){
-//			Url tempUrl = new Url();
-//			tempUrl.setUrlStr(baseUrl0 + "tab1PAGENUM=" +(i+1) + baseUrl1);
-//			tempJob.getPageList().get(0).getUrls().getUrlList().add(tempUrl);
-//		}
-//		return tempJob;
-//	}
-	
+	public Job getResultUrl2(Job tempJob){
+		
+		try {
+			Job job = (Job) tempJob.deepClone();
+			List<Url> baseUrls = job.getPageList().get(0).getUrls().getUrlList();
+			
+			tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
+			String querySql = "SELECT * FROM enterpris_info_t";
+			List<UrlAndTemplateBean> beanList = handle.getData2(querySql);
+			//根据实际情况进行修改
+			for(int i=0; i<beanList.size(); i++){
+				UrlAndTemplateBean bean = beanList.get(i);
+				for(int j=0; j<baseUrls.size(); j++){
+					Url tempUrl = new Url();
+					tempUrl.setCarrydata("companyname::"+bean.getCompanyName());
+					tempUrl.setUrlStr(baseUrls.get(j).getUrlStr().replace("公司代码", bean.getStockCode()));
+					tempJob.getPageList().get(0).getUrls().getUrlList().add(tempUrl);
+				}
+			}
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return tempJob;
+	}
 	/**
-	 * 需要修改公司名称和公司代码的url
+	 * 需要修改"公司代码"的url
 	 * @param tempJob
 	 * @param baseUrl
 	 */
-	public Job getResultUrl3(Job tempJob, String baseUrl){
+	public Job getResultUrl3(Job tempJob){
+		
+		String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
+		tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
 		
 		String querySql = "SELECT * FROM enterpris_info_t";
 		List<UrlAndTemplateBean> beanList = handle.getData2(querySql);
@@ -179,31 +198,53 @@ public class EnterpriseTask1 extends TimerTask {
 		for(int i=0; i<beanList.size(); i++){
 			UrlAndTemplateBean bean = beanList.get(i);
 			Url tempUrl = new Url();
-			tempUrl.setUrlStr(baseUrl.replace("公司名称", bean.getCompanyName()).replace("公司代码", bean.getStockCode()));
+			tempUrl.setUrlStr(baseUrl.replace("公司代码", bean.getStockCode()));
 			tempJob.getPageList().get(0).getUrls().getUrlList().add(tempUrl);
 		}
 		return tempJob;
 	}
 	/**
-	 * 需要修改公司名称和 对公司名称加密 的url
+	 * 需要修改"公司名称"和"对公司名称加密" 的url
 	 * @param tempJob
 	 * @param baseUrl
 	 */
-	public Job getResultUrl4(Job tempJob, String baseUrl){
-		
+	public Job getResultUrl4(Job tempJob){
 		try {
+			String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
+			tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
+			
 			String querySql = "SELECT * FROM enterpris_info_t";
 			List<UrlAndTemplateBean> beanList = handle.getData2(querySql);
 			//根据实际情况进行修改
 			for (int i = 0; i < beanList.size(); i++) {
 				UrlAndTemplateBean bean = beanList.get(i);
 				Url tempUrl = new Url();
+				tempUrl.setCarrydata("enterprise_name::"+bean.getCompanyName());
 				tempUrl.setUrlStr(baseUrl
-						.replace("加密后的公司名称",URLEncoder.encode(bean.getCompanyName(), "utf-8"))
-						.replace("公司名称", bean.getCompanyName()));
-				tempJob.getPageList().get(0).getUrls().getUrlList()
-						.add(tempUrl);
+						.replace("加密后的公司名称",URLEncoder.encode(bean.getCompanyName(), "utf-8")));
+				tempJob.getPageList().get(0).getUrls().getUrlList().add(tempUrl);
 			}
+		} catch (Exception e) {
+		}
+		return tempJob;
+	}
+	/**
+	 * 需要修改"开始时间"和"结束时间"的url 格式为"2015-05-27"
+	 * @param tempJob
+	 * @param baseUrl
+	 */
+	public Job getResultUrl5(Job tempJob){
+		try {
+			String baseUrl = tempJob.getPageList().get(0).getUrls().getUrlList().get(0).getUrlStr();
+			tempJob.getPageList().get(0).getUrls().getUrlList().clear();//清除urls
+			
+			//三个月的毫秒数
+			long interval = 7776000000L;
+			//根据实际情况进行修改
+			Url tempUrl = new Url();
+			tempUrl.setUrlStr(baseUrl.replace("结束时间",Util.getCrawlDate2(0))
+					.replace("开始时间",Util.getCrawlDate2(interval)));
+			tempJob.getPageList().get(0).getUrls().getUrlList().add(tempUrl);
 		} catch (Exception e) {
 		}
 		return tempJob;

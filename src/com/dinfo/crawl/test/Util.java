@@ -169,6 +169,21 @@ public class Util {
 		result = sdf.format(c.getTime());
 		return result;
 	}
+	/**
+	 * 获得全量采集日期(企业)
+	 * interval 时间间隔（毫秒）
+	 */
+	public static String getCrawlDate2(long interval){
+		String result = "";
+		Date date = new Date();
+		long millisecond = date.getTime();
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		Calendar c = Calendar.getInstance();
+		//当前时间向后或向前推导时间
+		c.setTimeInMillis(millisecond - interval);
+		result = sdf.format(c.getTime());
+		return result;
+	}
 	
 	/**
 	 * 解析excel
