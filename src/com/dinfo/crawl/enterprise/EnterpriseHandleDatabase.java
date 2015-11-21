@@ -1,10 +1,5 @@
 package com.dinfo.crawl.enterprise;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -26,17 +21,17 @@ import com.dinfo.crawl.test.Util;
 public class EnterpriseHandleDatabase {
 
 	public Connection conn;
-	public PreparedStatement pstm1;
-	public ResultSet rs1;
+	public PreparedStatement pstm;
+	public ResultSet rs;
 	
 	public EnterpriseHandleDatabase() {
 		super();
 	}
-	public EnterpriseHandleDatabase(Connection conn, PreparedStatement pstm1, ResultSet rs1) {
+	public EnterpriseHandleDatabase(Connection conn, PreparedStatement pstm, ResultSet rs) {
 		super();
 		this.conn = conn;
-		this.pstm1 = pstm1;
-		this.rs1 = rs1;
+		this.pstm = pstm;
+		this.rs = rs;
 	}
 	/**
 	 * 查询template_info_t中的数据
@@ -45,13 +40,13 @@ public class EnterpriseHandleDatabase {
 		
 		List<UrlAndTemplateBean> beans = new ArrayList<UrlAndTemplateBean>();
 		try {
-			pstm1 = conn.prepareStatement(querySql);
-			rs1 = pstm1.executeQuery();
+			pstm = conn.prepareStatement(querySql);
+			rs = pstm.executeQuery();
 			
-			while(rs1.next()){
+			while(rs.next()){
 				UrlAndTemplateBean bean = new UrlAndTemplateBean();
-				String templateName = rs1.getString("template_name");
-				String template_content = rs1.getString("template_content");
+				String templateName = rs.getString("template_name");
+				String template_content = rs.getString("template_content");
 				
 				bean.setTemplateName(templateName);
 				bean.setTemplate_content_source(template_content);
@@ -63,19 +58,19 @@ public class EnterpriseHandleDatabase {
 		return beans;
 	}
 	/**
-	 * 查询enterpris_info_t中的数据
+	 * 查询enterpris_info_t中的数据(生成任务用)
 	 */
 	public List<UrlAndTemplateBean> getData2(String querySql) {
 		
 		List<UrlAndTemplateBean> beans = new ArrayList<UrlAndTemplateBean>();
 		try {
-			pstm1 = conn.prepareStatement(querySql);
-			rs1 = pstm1.executeQuery();
+			pstm = conn.prepareStatement(querySql);
+			rs = pstm.executeQuery();
 			
-			while(rs1.next()){
+			while(rs.next()){
 				UrlAndTemplateBean bean = new UrlAndTemplateBean();
-				String companyName = rs1.getString("companyName");
-				String stockCode = rs1.getString("stockCode");
+				String companyName = rs.getString("companyName");
+				String stockCode = rs.getString("stockCode");
 				
 				bean.setCompanyName(companyName);
 				bean.setStockCode(stockCode);
@@ -87,6 +82,33 @@ public class EnterpriseHandleDatabase {
 		return beans;
 	}
 	/**
+	 * 查询enterpris_info_t中的数据(解析pdf文件用)
+	 */
+	public Map<String, String> getData3(String querySql) {
+		
+		Connection conn1 = EnterpriseHandleDatabase.getConnection();
+		PreparedStatement pstm1 = null;
+		ResultSet rs1 = null;
+		
+		Map<String, String> map = new HashMap<String, String>();
+		try {
+			pstm1 = conn1.prepareStatement(querySql);
+			rs1 = pstm1.executeQuery();
+			while(rs1.next()){
+				String companyAbbreviation = rs1.getString("companyAbbreviation");//公司简称
+				String companyName = rs1.getString("companyName");//公司名称
+				
+				map.put("companyAbbreviation", companyAbbreviation);
+				map.put("companyName", companyName);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		} finally{
+			closeDataSource(rs1, null, pstm1, null, conn1);
+		}
+		return map;
+	}
+	/**
 	 * 解析模板入库，向template_info_t表中添加数据
 	 */
 	@SuppressWarnings("static-access")
@@ -95,12 +117,12 @@ public class EnterpriseHandleDatabase {
 		String insertSql = "INSERT INTO template_info_t (template_name, template_content, file_path, platform_type)VALUES(?,?,?,?)";
 		String template_content = util.xmlToString(file_path);
 		try {
-			pstm1 = conn.prepareStatement(insertSql);
-			pstm1.setString(1, template_name);
-			pstm1.setString(2, template_content);
-			pstm1.setString(3, file_path);
-			pstm1.setInt(4, platform_type);
-			pstm1.execute();
+			pstm = conn.prepareStatement(insertSql);
+			pstm.setString(1, template_name);
+			pstm.setString(2, template_content);
+			pstm.setString(3, file_path);
+			pstm.setInt(4, platform_type);
+			pstm.execute();
 			System.out.println("insert template_info_t the data successfully！");
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -115,7 +137,7 @@ public class EnterpriseHandleDatabase {
 		
 		try {
 			String insertSql = "INSERT INTO config_enterprise_info_t (name, config, url_xml)VALUES(?,?,?)";
-			pstm1 = conn.prepareStatement(insertSql);
+			pstm = conn.prepareStatement(insertSql);
 			conn.setAutoCommit(false);
 			Iterator it = addConfigMap.keySet().iterator();
 			//添加到数据库
@@ -125,13 +147,13 @@ public class EnterpriseHandleDatabase {
 				Iterator temp = resultMap.keySet().iterator();
 				while (temp.hasNext()) {
 					String tempName = temp.next().toString();
-					pstm1.setString(1, tempName);//job名
-					pstm1.setObject(2, resultMap.get(tempName));//job对象
-					pstm1.setString(3, name);//xml字符串（只含有一个job）
-					pstm1.addBatch();
+					pstm.setString(1, tempName);//job名
+					pstm.setObject(2, resultMap.get(tempName));//job对象
+					pstm.setString(3, name);//xml字符串（只含有一个job）
+					pstm.addBatch();
 				}
 			}
-			pstm1.executeBatch();
+			pstm.executeBatch();
 			conn.commit();
 			System.out.println("insert the config_enterprise data successfully！");
 		} catch (Exception e) {
@@ -167,7 +189,6 @@ public class EnterpriseHandleDatabase {
 	                rs1.close();
 	            }
 	        } catch (Exception e) {
-	            
 	            e.printStackTrace();
 	        }
 		 	try {
@@ -175,7 +196,6 @@ public class EnterpriseHandleDatabase {
 		 			rs2.close();
 		 		}
 		 	} catch (Exception e) {
-		 		
 		 		e.printStackTrace();
 		 	}
 	        
@@ -184,7 +204,6 @@ public class EnterpriseHandleDatabase {
 	                pstmt1.close();//关闭预编译对象1
 	            }
 	        } catch (Exception e) {
-	            
 	            e.printStackTrace();
 	        }
 	        try {
@@ -192,7 +211,6 @@ public class EnterpriseHandleDatabase {
 	        		pstmt2.close();//关闭预编译对象2
 	        	}
 	        } catch (Exception e) {
-	        	
 	        	e.printStackTrace();
 	        }
 	        
@@ -203,7 +221,6 @@ public class EnterpriseHandleDatabase {
 	            }
 	            
 	        } catch (Exception e) {
-	            
 	            e.printStackTrace();
 	        }
 	}

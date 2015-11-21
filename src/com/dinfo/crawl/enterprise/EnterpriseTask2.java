@@ -29,13 +29,13 @@ import com.dinfo.crawl.test.Util;
 import com.dinfo.crawl.util.XMLUtil;
 
 /**
- * 查询原始信息表和模板表（id为7,8,9的基础信息）
+ * 查询原始信息表和模板表（id为 非 7,8,9的基础信息）
  * @author ljavaw
  *
  */
-public class EnterpriseTask1 extends TimerTask {
+public class EnterpriseTask2 extends TimerTask {
 
-	private static final Log logger = LogFactory.getLog(EnterpriseTask1.class);
+	private static final Log logger = LogFactory.getLog(EnterpriseTask2.class);
 	Connection conn = EnterpriseHandleDatabase.getConnection();
 	PreparedStatement pstmt1;
 	ResultSet rs1;
@@ -50,13 +50,13 @@ public class EnterpriseTask1 extends TimerTask {
 			XMLUtil xmlUtil = new XMLUtil();
 			TaskCrawl taskCrawl = new TaskCrawl();// 生成任务的方法
 			// 查询原始信息表和模板表
-			String querySql = "SELECT * FROM template_info_t WHERE template_type=4 and id in(7,8,9)";
+			String querySql = "SELECT * FROM template_info_t WHERE template_type=4 and id not in(7,8,9)";
 			List<List<UrlAndTemplateBean>> list = new ArrayList<List<UrlAndTemplateBean>>();
 			list.add(handle.getData1(querySql));
 			
 			for(int x = 0; x < list.size(); x++){
 				List<UrlAndTemplateBean> beans = list.get(x);
-				String[] t1Array = MyTest.CRAWL_PROPERTIES.get("templateXmlTimeEnterpriseTask1").split(",");
+				String[] t1Array = MyTest.CRAWL_PROPERTIES.get("templateXmlTimeEnterpriseTask2").split(",");
 				String year = t1Array[0];
 				String mouth = t1Array[1];
 				String day = t1Array[2];
@@ -110,13 +110,13 @@ public class EnterpriseTask1 extends TimerTask {
 						Map<String, JobConfig> resultMap = parseXml.parseXML(doc);// 生成一个job
 						Map<String, Map<String, JobConfig>> addConfigMap = new HashMap<String, Map<String, JobConfig>>();
 						addConfigMap.put(xml, resultMap);
-						taskCrawl.crawlStart(resultMap, 2);// 生成任务1:社区 2：企业
-						logger.info(">>>>>>>>>>>>>>>>>>>>>>>(Task1)生成任务！");
+						taskCrawl.crawlStart(resultMap, 2);// 生成任务   1:社区 2：企业
+						logger.info(">>>>>>>>>>>>>>>>>>>>>>>(Task2)生成任务！");
 						handle.addConfigInfo(addConfigMap);// 添加到config_enterprise_info_t数据库
-						logger.info(">>>>>>>>>>>>>>>>>>>>>>>(Task1)添加到config_enterprise_info_t数据库完成！");
+						logger.info(">>>>>>>>>>>>>>>>>>>>>>>(Task2)添加到config_enterprise_info_t数据库完成！");
 					}
 				}else{
-					logger.info("》》》》》》生成任务1   没有需要采集的url");
+					logger.info("》》》》》》生成任务2   没有需要采集的url");
 				}
 			}
 		} catch (Exception e) {

@@ -145,7 +145,7 @@ public class Task1 extends TimerTask {
 									Document doc = DocumentHelper.parseText(xml);
 									Map<String, JobConfig> resultMap = parseXml.parseXML(doc);// 生成一个job
 									addConfigMap.put(xml, resultMap);
-									taskCrawl.crawlStart(resultMap);// 生成任务
+									taskCrawl.crawlStart(resultMap,1);// 生成任务 1:社区 2：企业
 									logger.info(">>>>>>>>>>>>>>>>>>>>>>>(Task1)生成任务！");
 									z++;
 								}

@@ -24,6 +24,8 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.Filter;
+import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.filter.PageFilter;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -371,11 +373,11 @@ public class HBaseAPP {
 	}
 
 	/**
-	 * scan查詢(企业数据表)
+	 * scan查詢(企业数据表)默认取100条
 	 */
 	@SuppressWarnings({ "deprecation", "resource" })
 	public List<EnterpriseReportBean> scanRecordEnterprise(String table_name, List<String> familys,
-					String qualifier, String qualifierUrl) {
+					String qualifierStatus, String qualifierStatusVal) {
 		// ENTERPRIS_REPORT_T查询bean
 		List<EnterpriseReportBean> reportBeanList = new ArrayList<EnterpriseReportBean>();
 
@@ -384,16 +386,21 @@ public class HBaseAPP {
 
 				HTable hTable = new HTable(conf, table_name);
 				Scan scan = new Scan();
+				scan.setFilter(new PageFilter(100));
 				// 参数为（列簇，列名，CompareOp.EQUAL，条件）各个条件之间是" and "的关系
-				if (qualifier != null && !("").equals(qualifier)) {
-					scan.setFilter(new SingleColumnValueFilter(familys.get(0)
-							.getBytes(), qualifier.getBytes(), CompareOp.EQUAL,
-							Bytes.toBytes("0")));
-					scan.setFilter(new SingleColumnValueFilter(familys.get(1)
-							.getBytes(), qualifier.getBytes(), CompareOp.EQUAL,
-							Bytes.toBytes("0")));
+				if (qualifierStatus != null && !("").equals(qualifierStatus)) {
+					SingleColumnValueFilter filter1 = new SingleColumnValueFilter(familys.get(0)
+							.getBytes(), Bytes.toBytes(qualifierStatus), CompareOp.EQUAL,
+							Bytes.toBytes(qualifierStatusVal)); 
+					filter1.setFilterIfMissing(true);
+					SingleColumnValueFilter  filter2 = new SingleColumnValueFilter(familys.get(1)
+							.getBytes(), qualifierStatus.getBytes(), CompareOp.EQUAL,
+							Bytes.toBytes(qualifierStatusVal)); 
+					filter2.setFilterIfMissing(true);
+					scan.setFilter(filter1);
+					scan.setFilter(filter2);
 				}
-				scan.setFilter(new PageFilter(1000));
+				scan.setMaxResultSize(1l);
 				ResultScanner scanner = hTable.getScanner(scan);
 
 				for (Result result : scanner) {
@@ -401,10 +408,32 @@ public class HBaseAPP {
 					bean.setRowKey(new String(result.getRow()));
 					
 					for (Cell cell : result.rawCells()) {
-						if (qualifierUrl != null && !("").equals(qualifierUrl)
-								&& qualifierUrl.equals(new String(CellUtil.cloneQualifier(cell)))){
-							bean.setFamilyName(new String(CellUtil.cloneFamily(cell)));
-							bean.setRemoteFilePath(new String(CellUtil.cloneValue(cell)));
+//						System.out.println(new String(CellUtil.cloneQualifier(cell))+"  "+new String(CellUtil.cloneValue(cell)));
+						if(("noticeInfo").equals(new String(CellUtil.cloneFamily(cell)))){
+							switch(new String(CellUtil.cloneQualifier(cell))){
+							case "remoteFilePath":bean.setRemoteFilePath(new String(CellUtil.cloneValue(cell)));
+												  bean.setFamilyName(new String(CellUtil.cloneFamily(cell)));break;
+							case "localFilePath":bean.setLocalFilePath(new String(CellUtil.cloneValue(cell)));break;
+							case "getTime":bean.setGetTime(new String(CellUtil.cloneValue(cell)));break;
+							case "exchange":bean.setExchange(new String(CellUtil.cloneValue(cell)));break;
+							case "status":bean.setStatus(new String(CellUtil.cloneValue(cell)));break;
+							case "noticeTitle":bean.setTitle(new String(CellUtil.cloneValue(cell)));break;
+							case "noticeDate":bean.setReleaseTime(new String(CellUtil.cloneValue(cell)));break;
+							case "stockCode":bean.setStockCode(new String(CellUtil.cloneValue(cell)));break;
+							}
+							
+						}else if(("annualReportInfo").equals(new String(CellUtil.cloneFamily(cell)))){
+							switch(new String(CellUtil.cloneQualifier(cell))){
+							case "remoteFilePath":bean.setRemoteFilePath(new String(CellUtil.cloneValue(cell)));
+												  bean.setFamilyName(new String(CellUtil.cloneFamily(cell)));break;
+							case "localFilePath":bean.setLocalFilePath(new String(CellUtil.cloneValue(cell)));break;
+							case "getTime":bean.setGetTime(new String(CellUtil.cloneValue(cell)));break;
+							case "exchange":bean.setExchange(new String(CellUtil.cloneValue(cell)));break;
+							case "status":bean.setStatus(new String(CellUtil.cloneValue(cell)));break;
+							case "annualReportTitle":bean.setTitle(new String(CellUtil.cloneValue(cell)));break;
+							case "reportDate":bean.setReleaseTime(new String(CellUtil.cloneValue(cell)));break;
+							case "stockCode":bean.setStockCode(new String(CellUtil.cloneValue(cell)));break;
+							}
 						}
 					}
 					reportBeanList.add(bean);
@@ -415,6 +444,7 @@ public class HBaseAPP {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		System.out.println("查出的数据数：》》》"+reportBeanList.size());
 		return reportBeanList;
 	}
 

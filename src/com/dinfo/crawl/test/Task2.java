@@ -145,7 +145,7 @@ public class Task2 extends TimerTask {
 				Map<String, JobConfig> resultMap = parseXml.parseXML(doc);//只生成了一个job
 				addConfigMap.put(xml, resultMap);
 				
-				taskCrawl.crawlStart(resultMap);//生成任务(一个job)
+				taskCrawl.crawlStart(resultMap,1);//生成任务(一个job)1:社区 2：企业
 				logger.info(">>>>>>>>>>>>>>>>>>>>>>>(Task2)生成任务！");
 			}
 			

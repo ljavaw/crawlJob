@@ -1,7 +1,11 @@
 package com.dinfo.crawl;
 
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -21,11 +25,35 @@ import com.dinfo.crawl.job.CrawlJob;
 
 public class TaskCrawl {
 	
-	public void crawlStart(Map<String,JobConfig> configMap){
-		 SchedulerFactory sf = new StdSchedulerFactory();
+	 public static SchedulerFactory initJobSchedulerFactory(String name){
+         Properties prop = new Properties();
+         File file = new File(name);
+         try {
+         	FileInputStream fin = new FileInputStream(file);
+             prop.load( fin );
+         } catch (IOException ex) {
+             System.out.println(ex.toString());
+         }
+         StdSchedulerFactory ssf = null;
+			try {
+				ssf = new StdSchedulerFactory( prop );
+			} catch (SchedulerException e) {
+				e.printStackTrace();
+			}
+         return ssf;
+	    }
+	
+	
+	public void crawlStart(Map<String,JobConfig> configMap,int type){
+		 SchedulerFactory sf = initJobSchedulerFactory("quartz.properties");
+		 SchedulerFactory sf2 = initJobSchedulerFactory("quartzqy.properties");
 		 Scheduler sched = null ;
 		try {
-			sched = sf.getScheduler();
+			if(type == 1){
+				sched = sf.getScheduler();
+			}else if(type == 2){
+				sched = sf2.getScheduler();
+			}
 		} catch (SchedulerException e1) {
 			e1.printStackTrace();
 		}
