@@ -1,0 +1,10 @@
+delete from QRTZ_CRON_TRIGGERS;
+
+delete FROM `QRTZ_TRIGGERS`;
+
+delete from QRTZ_SCHEDULER_STATE;
+
+delete from QRTZ_JOB_DETAILS;
+#truncate table COMMUNITY_INFO_T;
+
+truncate table config_info_t;
