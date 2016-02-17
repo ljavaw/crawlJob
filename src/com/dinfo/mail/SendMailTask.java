@@ -5,8 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.TimerTask;
 
-import com.dinfo.crawl.test.HandleDatabase;
-import com.dinfo.crawl.test.MyTest;
+import com.dinfo.crawl.main.HandleDatabase;
+import com.dinfo.crawl.main.MainTask;
 
 public class SendMailTask extends TimerTask{
 
@@ -28,7 +28,7 @@ public class SendMailTask extends TimerTask{
 		FIRST_COUNT = getCount();//第一次查询数据条数
 		while (true) {
 			try {
-				Thread.sleep(Integer.parseInt(MyTest.CRAWL_PROPERTIES.get("spaceTimerSendMail")));
+				Thread.sleep(Integer.parseInt(MainTask.CRAWL_PROPERTIES.get("spaceTimerSendMail")));
 				int temp = getCount();//第二次查询数据条数
 				if(temp <= FIRST_COUNT){
 					sendMail.sendMailReport(tableName+"中的数据未增加！");

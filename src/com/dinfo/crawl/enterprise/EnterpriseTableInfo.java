@@ -14,6 +14,10 @@ public class EnterpriseTableInfo {
 	
 	// 上市公司报告  数据表  表名
 	public static final String tableName = "ENTERPRIS_REPORT_T";
+	// 上市公司报告    列族名noticeInfo   
+	public static final String familyName_noticeInfo = "noticeInfo";
+	// 上市公司报告    列族名annualReportInfo  
+	public static final String familyName_annualReportInfo = "annualReportInfo";
 	// 上市公司报告  数据表  列族名
 	@SuppressWarnings("serial")
 	public static final List<String> familyNames = new ArrayList<String>() {

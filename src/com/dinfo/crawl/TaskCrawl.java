@@ -1,6 +1,8 @@
 package com.dinfo.crawl;
 
 
+import static org.quartz.TriggerBuilder.newTrigger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,6 +19,8 @@ import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.SchedulerFactory;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 
@@ -46,6 +50,7 @@ public class TaskCrawl {
 	
 	public void crawlStart(Map<String,JobConfig> configMap,int type){
 		 SchedulerFactory sf = initJobSchedulerFactory("quartz.properties");
+		 
 		 SchedulerFactory sf2 = initJobSchedulerFactory("quartzqy.properties");
 		 Scheduler sched = null ;
 		try {
@@ -60,12 +65,18 @@ public class TaskCrawl {
 		Set<Entry<String, JobConfig>> conEntrys = configMap.entrySet();
 		for(Entry<String,JobConfig> confEntry:conEntrys){
 			String jobName = confEntry.getKey();
+			System.out.println("--------------------"+jobName);
+			
 			JobConfig jobConf = confEntry.getValue();
 			String cronExp = jobConf.getCronExp();
 			 JobDetail crawlJob = JobBuilder.newJob(CrawlJob.class).withIdentity(
 					 jobName, "DefaultJobGroup").build();
 			CronTrigger cron = TriggerBuilder.newTrigger().withIdentity(jobName,jobName+"Group")
 			                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExp)).build();
+			
+//			Trigger cron = newTrigger().withIdentity(jobName,jobName+"Group").startNow().withSchedule(
+//					SimpleScheduleBuilder.simpleSchedule().repeatForever()
+//		                 .withIntervalInHours(24)).startNow().build();
 	        JobDataMap dataMap = crawlJob.getJobDataMap();
 	    	dataMap.put("jobName", jobName);
 	    	try {

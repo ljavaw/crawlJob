@@ -18,10 +18,17 @@ import javax.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)  
 @XmlRootElement  
 public class Job implements Cloneable,Serializable{
+	
 	@XmlElement(name="name")
 	private String jobName;
 	@XmlElement(name="cron")
 	private String jobCron;
+	@XmlElement(name="jobtype")
+	private String jobtype;
+	@XmlElement(name="source-save-type")
+	private String sourceSaveType;
+	@XmlElement(name="source-path")
+	private String sourcePath;
 	@XmlElements(value = {@XmlElement(type=Page.class, name="page")})
 	private List<Page> pageList;
 	
@@ -73,6 +80,29 @@ public class Job implements Cloneable,Serializable{
 	public void setPageList(List<Page> pageList) {
 		this.pageList = pageList;
 	}
-	
+
+	public String getJobtype() {
+		return jobtype;
+	}
+
+	public void setJobtype(String jobtype) {
+		this.jobtype = jobtype;
+	}
+
+	public String getSourceSaveType() {
+		return sourceSaveType;
+	}
+
+	public void setSourceSaveType(String sourceSaveType) {
+		this.sourceSaveType = sourceSaveType;
+	}
+
+	public String getSourcePath() {
+		return sourcePath;
+	}
+
+	public void setSourcePath(String sourcePath) {
+		this.sourcePath = sourcePath;
+	}
 	
 }

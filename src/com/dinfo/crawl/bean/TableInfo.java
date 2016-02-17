@@ -18,12 +18,13 @@ import java.util.List;
 
 public class TableInfo {
 	
-	public static final String[] TABLENAMES = {"COMMUNITY_INFO_T","COMMUNITY_BBS_INFO","COMMUNITY_COMMENT_INFO","MERCHANT_INFO_T","MERCHANT_COMMENT_INFO","SHOP_INFO_T"};
+	public static final String[] TABLENAMES = {"RESOURCE_COMMUNITY_INFO_T","COMMUNITY_BBS_INFO",
+		"COMMUNITY_COMMENT_INFO","MERCHANT_INFO_T","MERCHANT_COMMENT_INFO","SHOP_INFO_T"};
 	
 	//社区索引信息表
-	public static final String COMMUNITY_KEYS_INDEX = "COMMUNITY_KEYS_INDEX";
+	public static final String RESOURCE_COMMUNITY_KEYS_INDEX = "RESOURCE_COMMUNITY_KEYS_INDEX";
 	//社区基本信息表
-	public static final String COMMUNITY_INFO_T = "COMMUNITY_INFO_T";
+	public static final String RESOURCE_COMMUNITY_INFO_T = "RESOURCE_COMMUNITY_INFO_T";
 	//社区论坛索引表
 	public static final String COMMUNITY_BBS_INDEX = "COMMUNITY_BBS_INDEX";
 	//社区论坛信息
@@ -41,13 +42,13 @@ public class TableInfo {
 	//商户大众点评信息表
 	public static final String MERCHANT_COMMENT_INFO = "MERCHANT_COMMENT_INFO";
 	//商户点评信息索引表
-	public static final String SHOP_INFO_INDEX = "SHOP_INFO_INDEX";
+	public static final String SHOP_INFO_INDEX = "RESOURCE_SHOP_INFO_INDEX";
 	//商户点评信息
-	public static final String SHOP_INFO_T = "SHOP_INFO_T";
+	public static final String SHOP_INFO_T = "RESOURCE_SHOP_INFO_T";
 	
 	
 	@SuppressWarnings("serial")
-	public static final List<String> COMMUNITY_INFO_T_FAMILYNAME_LIST = new ArrayList<String>(){{add("community");}};
+	public static final List<String> RESOURCE_COMMUNITY_INFO_T_FAMILYNAME_LIST = new ArrayList<String>(){{add("community");}};
 	
 	@SuppressWarnings("serial")
 	public static final List<String> COMMUNITY_BBS_INFO_FAMILYNAME_LIST = new ArrayList<String>(){{add("bbs");}};
@@ -66,7 +67,7 @@ public class TableInfo {
 	
 	
 	@SuppressWarnings("serial")
-	public static final List<String> COMMUNITY_INFO_T_CELL_LIST = 
+	public static final List<String> RESOURCE_COMMUNITY_INFO_T_CELL_LIST = 
 			new ArrayList<String>(){{add("province");add("city");add("country");add("comment_url");add("comment_page_num");
 			add("bbs_url");add("bbs_page_num");add("platform_type");add("longitude");add("latitude");
 			add("community_name");add("community_address");add("volume_rate");add("green_rate");add("developer");
@@ -106,33 +107,5 @@ public class TableInfo {
 			new ArrayList<String>(){{add("shop_name");add("tel");add("opentime");add("consumption_person");add("flavor");
 			add("service");add("environmental_score");add("address");add("cost");add("technology");
 			add("price");add("base_url");add("url");add("get_time");}};
-
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-
 
 }

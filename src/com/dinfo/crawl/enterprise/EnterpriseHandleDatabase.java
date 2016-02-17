@@ -13,8 +13,8 @@ import java.util.Map;
 
 import com.dinfo.crawl.bean.UrlAndTemplateBean;
 import com.dinfo.crawl.conf.JobConfig;
-import com.dinfo.crawl.test.MyTest;
-import com.dinfo.crawl.test.Util;
+import com.dinfo.crawl.main.MainTask;
+import com.dinfo.crawl.main.Util;
 /**
  * @author ljavaw
  */
@@ -166,13 +166,13 @@ public class EnterpriseHandleDatabase {
 	public static Connection getConnection(){  
 		 try {
 			
-	            String drivers =  MyTest.CRAWL_PROPERTIES.get("driverclass");  
+	            String drivers =  MainTask.CRAWL_PROPERTIES.get("driverclass");  
 	            if (drivers != null && !"".equals(drivers)) {  
 	                System.setProperty("driverclass", drivers);  
 	            }  
-	            String url = MyTest.CRAWL_PROPERTIES.get("dburl");  
-	            String username = MyTest.CRAWL_PROPERTIES.get("username");  
-	            String password = MyTest.CRAWL_PROPERTIES.get("password");  
+	            String url = MainTask.CRAWL_PROPERTIES.get("dburl");  
+	            String username = MainTask.CRAWL_PROPERTIES.get("username");  
+	            String password = MainTask.CRAWL_PROPERTIES.get("password");  
            
 				return DriverManager.getConnection(url, username, password);
 			} catch (SQLException e) {

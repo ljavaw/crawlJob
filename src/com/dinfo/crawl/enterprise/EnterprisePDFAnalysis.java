@@ -1,13 +1,6 @@
 package com.dinfo.crawl.enterprise;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -31,74 +24,83 @@ import com.dinfo.hbase.HbaseUtil;
  */
 public class EnterprisePDFAnalysis extends TimerTask{
 	
+	//map中的key标识（用于数据表中的数据）
+	public String dataString = "data";
+	//map中的key标识（用于索引表中的数据）
+	public String intString = "index";
+	
+	HBaseAPP app = new HBaseAPP();
+	
 	/**
 	 * 解析pdf文件并入库
 	 */
+	@SuppressWarnings("static-access")
 	@Override
 	public void run() {
+		//status  0:文件未下载1:文件已下载2:已解析入库(未同步)
+		String status = "1";
+		//一次查出的数据条数
+		int pageSize = 100;
+		
 		while(true){
-			EnterprisePDFAnalysis test = new EnterprisePDFAnalysis();
-			List<EnterpriseReportBean> list = test.getLocalUrl();
-			if(list != null && list.size() > 0){
-				for(EnterpriseReportBean bean : list){
+			List<EnterpriseReportBean> beanList = app.scanRecordEnterprise(EnterpriseTableInfo.tableName,
+					EnterpriseTableInfo.familyNames, EnterpriseTableInfo.cellName2, status, pageSize);
+			System.out.println("PDF解析，查出的数据数：》》》"+beanList.size());
+			if(beanList != null && beanList.size() > 0){
+				for(EnterpriseReportBean bean : beanList){
 					if(bean.getLocalFilePath() != null && !("").equals(bean.getLocalFilePath())){
 						Map<String, EnterpriseDynamicBean> map = new HashMap<String,EnterpriseDynamicBean>();
-						
-						if(bean.getFamilyName() != null && ("annualReportInfo").equals(bean.getFamilyName())){
+						if(bean.getFamilyName() != null && (EnterpriseTableInfo.familyName_annualReportInfo).equals(bean.getFamilyName())){
 							//分析年报
-							map = test.parseAnnualPdf(bean);
-						}else if(bean.getFamilyName() != null && ("noticeInfo").equals(bean.getFamilyName())){
+							map = this.parseAnnualPdf(bean);
+						}else if(bean.getFamilyName() != null && (EnterpriseTableInfo.familyName_noticeInfo).equals(bean.getFamilyName())){
 							//分析公告
-							map = test.parseNoticePdf(bean);
+							map = this.parseNoticePdf(bean);
 						}
 						if(map != null && map.size() > 0){
-							test.putData(map.get("data"), EnterpriseTableInfo.tableName1);
-							test.putData(map.get("index"), EnterpriseTableInfo.indexTableName1);
+							this.putData(map.get(dataString), EnterpriseTableInfo.tableName1);
+							this.putData(map.get(intString), EnterpriseTableInfo.indexTableName1);
 						}
 					}
+					bean.setStatus("2");//用于更新信息状态
 				}
 			}else{
 				break;
+			}
+			try {
+				app.updateRecord(EnterpriseTableInfo.tableName, beanList);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 	}
 	
 	/**
-	 * 获得本地的pdf文件路径(默认一次只取100数据)
-	 * 
-	 * @return
-	 */
-	public List<EnterpriseReportBean> getLocalUrl() {
-		HBaseAPP app = new HBaseAPP();
-		List<EnterpriseReportBean> list = app.scanRecordEnterprise(EnterpriseTableInfo.tableName,
-				EnterpriseTableInfo.familyNames, EnterpriseTableInfo.cellName2, "1");
-		return list;
-	}
-	
-	/**
 	 * 解析pdf文件1(解析的年报部分)
 	 * @param pdfPath
-	 * @return 
 	 */
 	public Map<String, EnterpriseDynamicBean> parseAnnualPdf(EnterpriseReportBean bean){
 		
 		Map<String, EnterpriseDynamicBean> resultMap = new HashMap<String, EnterpriseDynamicBean>();
 		EnterpriseDynamicBean resultBeanData = new EnterpriseDynamicBean();
 		EnterpriseDynamicBean resultBeanIndex = new EnterpriseDynamicBean();
+		PDDocument doc = null;
 		try {
-			PDDocument doc = PDDocument.load(bean.getLocalFilePath());
+			doc = PDDocument.load(bean.getLocalFilePath());
 			PDFTextStripper stripper = new PDFTextStripper();
 			String text = stripper.getText(doc);
 			
 			//enterpriseAnnualReport(企业年报信息)
 			Map<String, String> dataMap = new HashMap<String, String>();
+			
+			Map<String, String> tempMap = getMysqlData(bean.getStockCode());
+			
 			//stockCode	股票代码
 			dataMap.put("stockCode", bean.getStockCode());
 			//stockName	股票名称
-			dataMap.put("stockName", getMysqlData(bean.getStockCode()).get("companyAbbreviation"));
+			dataMap.put("stockName", tempMap.get("companyAbbreviation"));
 			//companyName 公司名称
-			String companyName = getMysqlData(bean.getStockCode()).get("companyName");
-			dataMap.put("companyName", companyName);
+			dataMap.put("companyName", tempMap.get("companyName"));
 			//releaseTime	发布时间
 			dataMap.put("releaseTime", bean.getReleaseTime());
 			//annualReportYear	年报年份
@@ -119,6 +121,10 @@ public class EnterprisePDFAnalysis extends TimerTask{
 			dataMap.put("filePath", bean.getLocalFilePath());
 			//getTime	采集时间
 			dataMap.put("getTime", bean.getGetTime());
+			
+			String companyName = dataMap.get("companyName");
+			
+			System.out.println("stockCode>>>>>>>"+bean.getStockCode());
 			System.out.println("companyName>>>>>>>"+companyName);
 			System.out.println("getRemoteFilePath>>>>>>>"+bean.getRemoteFilePath());
 			if(companyName == null || ("").equals(companyName) 
@@ -139,6 +145,14 @@ public class EnterprisePDFAnalysis extends TimerTask{
 			resultMap.put("index", resultBeanIndex);
 		} catch (IOException e) {
 			e.printStackTrace();
+		} finally{
+			try {
+				if(doc != null){
+					doc.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 		return resultMap;
 	}
@@ -251,8 +265,7 @@ public class EnterprisePDFAnalysis extends TimerTask{
 
 				Set<String> rowKeys = new TreeSet<String>();
 				rowKeys.add(bean.getRowKey());
-				HBaseAPP.putRecord(EnterpriseTableInfo.tableName, rowKeys, bean.getFamilyName(),
-						temp);
+				HBaseAPP.putRecord(EnterpriseTableInfo.tableName, rowKeys, bean.getFamilyName(), temp);
 			}
 		} catch (Exception e) {
 		}
@@ -280,56 +293,5 @@ public class EnterprisePDFAnalysis extends TimerTask{
 //				return str;
 //			}
 		  return buffer.toString();
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	public static void main(String[] args) {
-		try {
-			String dir = "e:/pdf/";
-			File file = new File(dir);
-			if (!file.exists()) {
-				file.mkdirs();
-			}
-			//上市交易所 0:上交所 1：深交所
-			String url = "http://static.sse.com.cn/disclosure/listedinfo/announcement/c/2015-09-07/600983_20150907_1.pdf";
-			URL u = new URL(url);
-				
-			InputStream i = u.openStream();
-			byte[] b = new byte[1024*1024];
-			int len;
-			String fileName = url.substring(url.lastIndexOf("/")+1);
-			OutputStream bos;
-
-			bos = new FileOutputStream(new File(dir + fileName));
-			while ((len = i.read(b)) != -1) {
-					bos.write(b, 0, len);
-				}
-			bos.flush();
-			bos.close();
-			i.close();
-			System.out.println("下载完成,本地路径为："+(dir + fileName));
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		/*Pattern pattern = Pattern.compile(".*年.*月.*日.*");
-		Matcher matcher = pattern.matcher("二○一五年三月十日");
-		StringBuffer buffer = new StringBuffer();
-		while(matcher.find()){             
-		    buffer.append(matcher.group());       
-		System.out.println(buffer.toString());
-		}*/
 	}
 }

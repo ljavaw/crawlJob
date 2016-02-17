@@ -1,61 +1,45 @@
 package com.dinfo.crawl.conf;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.dom4j.tree.DefaultAttribute;
 
 import com.dinfo.crawl.URLBean;
 import com.dinfo.fetcher.bean.CrawlParameter;
 import com.dinfo.fetcher.bean.CrawlType;
+import com.dinfo.fetcher.bean.NewCookie;
+import com.dinfo.fetcher.bean.ProxyBean;
 import com.dinfo.parse.bean.IntelligentType;
 import com.dinfo.parse.bean.ParseParameter;
 import com.dinfo.parse.bean.ParseType;
 
 public class ParseXML {
 
-	/*public static Map<String,JobConfig> getConfigMap() {
-		Map<String,JobConfig> configMap = parseXML("crawl.xml");
-		return configMap;
-	}
-	
-	
-	public static Map<String,JobConfig> getConfigMap(String fileName) {
-		Map<String,JobConfig> configMap = parseXML(fileName);
-		return configMap;
-	}
-	
-	
-	public static void main(String[] args) {
-		parseXML("crawl.xml");
-	}*/
-
 	@SuppressWarnings("unchecked")
 	public static Map<String,JobConfig> parseXML(Document doc) {
 		Map<String,JobConfig>  configMap= null;
 		try {
-			/*SAXReader reader = new SAXReader();
-			File file = new File(fileName);
-			InputStream in = ParseXML.class.getClassLoader()
-					.getResourceAsStream(fileName);
-			FileInputStream fin = null;
-			try {
-				fin = new FileInputStream(file);
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
-			Document doc = reader.read(fin);*/
 			Element root = doc.getRootElement();
 			System.out.println(root.getName());
 			List<Element> jobs = root.elements();
@@ -65,6 +49,9 @@ public class ParseXML {
 					JobConfig jobCon = new JobConfig();
 					String name = job.elementTextTrim("name");
 					String cron = job.elementTextTrim("cron");
+					String ssavetype = job.elementTextTrim("source-save-type");
+					String spath = job.elementTextTrim("source-path");
+					String jobType = job.elementTextTrim("jobtype");
 					System.out.println(name);
 					List<Element> pages = job.elements("page");
 					if(CollectionUtils.isNotEmpty(pages)){
@@ -129,8 +116,6 @@ public class ParseXML {
 								long stime = Long.parseLong(sleepTime);
 								pagecon.setSleepTime(stime);
 							}
-							
-							
 							String testUrl = urls.elementText("testurl");   // 如果有代理则测试代理可用性的url
 							pagecon.setTesturl(testUrl);
 							
@@ -191,8 +176,6 @@ public class ParseXML {
 												}
 											}
 										}
-										
-										
 										
 										if(CollectionUtils.isNotEmpty(listlist)){
 											List<String> urlist = new ArrayList<String>();
@@ -303,7 +286,10 @@ public class ParseXML {
 						}
 						jobCon.setCronExp(cron);
 						jobCon.setName(name);
+						jobCon.setSpath(spath);
+						jobCon.setSsavetype(ssavetype);
 						jobCon.setPageConList(pageList);
+						jobCon.setJobType(jobType);
 						configMap.put(name, jobCon);
 					}
 				}
@@ -357,9 +343,51 @@ public class ParseXML {
 			}
 			
 		}else if(name.equals("cookie")){
+			if(StringUtils.isNotBlank(value)){
+				Set<NewCookie> snc = new HashSet<NewCookie>();
+				if(value.contains("domain=") || value.contains("path=")){
+					String[] cooks = value.split("|");
+					if(cooks!=null && cooks.length>0){
+						for(String cook:cooks){
+							NewCookie nc = new NewCookie();
+							List<String> list = getList(cook,";");
+							for(String kv:list){
+								String[] ss = kv.split("=");
+								if(ss!=null && ss.length==2){
+									if(ss[0].contains("domain")){
+										nc.setDomain(ss[1]);
+									}else if(ss[0].equals("path")){
+										nc.setPath(ss[1]);
+									}else if(ss[0].equals("expires")){
+										Date date = new Date(ss[1]);
+										nc.setExpiry(date);
+									}else{
+										nc.setName(ss[0]);
+										nc.setValue(ss[1]);
+									}
+								}
+							}
+							snc.add(nc);
+						}
+					}
+				}else{
+					List<String> list = getList(value,";");
+					for(String s:list){
+						String[] arr = s.split("=");
+						if(arr!=null && arr.length==2){
+							snc.add(new NewCookie(arr[0],arr[1]));
+						}
+						
+					}
+				}
+				
+				if(CollectionUtils.isNotEmpty(snc)){
+					crawlPara.setCookie(snc);
+				}
+				
+			}
 			
 		}else if(name.equals("header")){
-			
 			if(StringUtils.isNotBlank(value)){
 				Map<String,String> map = new HashMap<String,String>();
 				List<String> list = getList(value,";");
@@ -378,8 +406,8 @@ public class ParseXML {
 		}else if(name.equals("isuseproxy")){
 			crawlPara.setUseProxy(getTrueOrFalse(value));
 		}else if(name.equals("proxyurl")){
-			/*ProxyBean proxy = QueryProxy.testProxy(value);
-			crawlPara.setProxyBean(proxy);*/
+			//ProxyBean proxy = QueryProxy.testProxy(value);
+			//crawlPara.setProxyBean(proxy);
 		}else if(name.equals("isignorecontenttype")){
 			crawlPara.setIsignorecontenttype(getTrueOrFalse(value));
 		}
@@ -450,7 +478,6 @@ public static ParseParameter addParsePara(String name,String value,ParseParamete
 		for(int i=0; i<list.size(); i++){
 			List<String> l = list.get(i);
 			urllist = getUrls(urllist,l,i);
-			
 		}
 		return urllist;
 	}
@@ -479,8 +506,6 @@ public static ParseParameter addParsePara(String name,String value,ParseParamete
 		  }
 		}
 		return total;
-		
 	}
 
 }
-

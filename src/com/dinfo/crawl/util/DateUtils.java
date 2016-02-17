@@ -28,6 +28,15 @@ public class DateUtils {
 	}
 	
 
+	 public static void main(String[] args) {
+		 DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+
+		 long now = 1451246400000L;
+		 Calendar calendar = Calendar.getInstance();
+		 calendar.setTimeInMillis(now);
+
+		 System.out.println(now + " = " + formatter.format(calendar.getTime()));
+	 }
 	public static Date getDateFromStrYYYYMMDDhhmm(String strDate) {
 
 		Date ret = null;
@@ -456,9 +465,6 @@ public class DateUtils {
 		Date date = calendar.getTime();
 		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		return df.format(date);
-	}
-	public static void main(String[] args) {
-		System.out.println(DateUtils.getbeforeMinute(-10));
 	}
 	@SuppressWarnings("unused")
 	public  static long getDatePoor(Date endDate, Date nowDate) {

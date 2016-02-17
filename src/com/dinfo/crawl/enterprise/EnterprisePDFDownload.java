@@ -9,44 +9,42 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.TimerTask;
-import java.util.TreeSet;
 
+import com.dinfo.crawl.main.MainTask;
 import com.dinfo.hbase.HBaseAPP;
 
 public class EnterprisePDFDownload extends TimerTask{
 
 
+	HBaseAPP app = new HBaseAPP();
 	/**
 	 * 下载pdf文件
 	 */
 	@Override
 	public void run() {
-		while (true) {
-			List<EnterpriseReportBean> beans = getData();
-			if (beans != null && beans.size() > 0) {
-				List<EnterpriseReportBean> bean = downloadPDF(beans);
-				putData(bean);
-			} else {
-				break;
+		
+		//status  0:文件未下载1:文件已下载2:已解析入库(未同步)
+		String status = "0";	
+		//一次查出的数据条数
+		int pageSize = 100;
+		try {
+			while (true) {
+				List<EnterpriseReportBean> beanList = app.scanRecordEnterprise(EnterpriseTableInfo.tableName,
+						EnterpriseTableInfo.familyNames, EnterpriseTableInfo.cellName2, status, pageSize);
+				System.out.println("PDF下载，查出的数据数：》》》"+beanList.size());
+				if (beanList != null && beanList.size() > 0) {
+					List<EnterpriseReportBean> beanResultList = downloadPDF(beanList);
+					//插入 "本地pdf文件路径" 和  改变"status"
+					HBaseAPP.updateRecord(EnterpriseTableInfo.tableName, beanResultList);
+				} else {
+					break;
+				}
 			}
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-	}
-
-	/**
-	 * 获得下载的url(默认一次只取100数据)
-	 * 
-	 * @return
-	 */
-	public List<EnterpriseReportBean> getData() {
-		HBaseAPP app = new HBaseAPP();
-		List<EnterpriseReportBean> list = app.scanRecordEnterprise(EnterpriseTableInfo.tableName,
-				EnterpriseTableInfo.familyNames, EnterpriseTableInfo.cellName2, "0");
-		return list;
 	}
 
 	/**
@@ -54,11 +52,11 @@ public class EnterprisePDFDownload extends TimerTask{
 	 */
 	public List<EnterpriseReportBean> downloadPDF(List<EnterpriseReportBean> list){
 		List<EnterpriseReportBean> resultList = new ArrayList<EnterpriseReportBean>();
-				// 遍历pdf地址的list，逐个下载
+			// 遍历pdf地址的list，逐个下载
 			for(EnterpriseReportBean bean : list){
 				String tempUrl = "";//用于测试
 				try {
-					String dir = "f:/pdf/";
+					String dir = MainTask.CRAWL_PROPERTIES.get("PDFfilepath");
 					File file = new File(dir);
 					if (!file.exists()) {
 						file.mkdirs();
@@ -68,15 +66,16 @@ public class EnterprisePDFDownload extends TimerTask{
 					if(bean.getExchange() != null && ("1").equals(bean.getExchange())){//深交所（所有）
 						url = "http://disclosure.szse.cn"+bean.getRemoteFilePath().substring(2);
 					}else if(bean.getExchange() != null && ("0").equals(bean.getExchange()) &&
-							bean.getFamilyName() != null && ("annualReportInfo").equals(bean.getFamilyName())){//上交所——年报
+							bean.getFamilyName() != null && (EnterpriseTableInfo.familyName_annualReportInfo).equals(bean.getFamilyName())){//上交所——年报
 						url = "http://static.sse.com.cn"+bean.getRemoteFilePath();
 					}else if(bean.getExchange() != null && ("0").equals(bean.getExchange()) &&
-							bean.getFamilyName() != null && ("noticeInfo").equals(bean.getFamilyName())){//上交所——公告
+							bean.getFamilyName() != null && (EnterpriseTableInfo.familyName_noticeInfo).equals(bean.getFamilyName())){//上交所——公告
 						url = bean.getRemoteFilePath().substring(bean.getRemoteFilePath().indexOf("http"));
 					}else{
 						continue;
 					}
 					tempUrl = url;
+					System.out.println("url>>>>>>>>>>"+tempUrl);
 					URL u = new URL(url);
 						
 					InputStream i = u.openStream();
@@ -94,47 +93,16 @@ public class EnterprisePDFDownload extends TimerTask{
 					i.close();
 					System.out.println("下载完成,本地路径为："+(dir + fileName));
 					bean.setLocalFilePath(dir + fileName);
+					bean.setStatus("1");//用于改变信息状态
 					resultList.add(bean);
 				} catch (MalformedURLException e) {
-					System.out.println("url>>>>>>>>>>"+tempUrl);
 					e.printStackTrace();
 				} catch (FileNotFoundException e) {
-					System.out.println("url>>>>>>>>>>"+tempUrl);
 					e.printStackTrace();
 				} catch (IOException e) {
-					System.out.println("url>>>>>>>>>>"+tempUrl);
 					e.printStackTrace();
 				}
 			}
 			return resultList;
-	}
-
-	/**
-	 * 插入 "本地pdf文件路径" 和  改变"status"
-	 */
-	@SuppressWarnings({ "serial" })
-	public void putData(List<EnterpriseReportBean> list) {
-
-		try {
-			for (int i = 0; i < list.size(); i++) {
-				EnterpriseReportBean bean = list.get(i);
-
-				final Map<String, String> tempMap = new HashMap<String, String>();
-				tempMap.put(EnterpriseTableInfo.cellName1, bean.getLocalFilePath());
-				// status 0:文件未下载1:文件已下载 2:已解析入库(未同步)
-				tempMap.put(EnterpriseTableInfo.cellName2, "1");
-				List<Map<String, String>> temp = new ArrayList<Map<String, String>>() {
-					{
-						add(tempMap);
-					}
-				};
-
-				Set<String> rowKeys = new TreeSet<String>();
-				rowKeys.add(bean.getRowKey());
-				HBaseAPP.putRecord(EnterpriseTableInfo.tableName, rowKeys, bean.getFamilyName(),
-						temp);
-			}
-		} catch (Exception e) {
-		}
 	}
 }

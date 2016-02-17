@@ -2,9 +2,9 @@ package com.dinfo.fetcher.bean;
 
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Set;
 
 import com.dinfo.fetcher.util.ParseProperty;
-import com.gargoylesoftware.htmlunit.BrowserVersion;
 import com.gargoylesoftware.htmlunit.WebClient;
 
 public class CrawlParameter  implements Serializable{
@@ -14,7 +14,7 @@ public class CrawlParameter  implements Serializable{
 	 */
 	private static final long serialVersionUID = 1L;
 	private CrawlType type = CrawlType.jsoup;
-	private String encode = "utf-8"; // 编码
+	private String encode = ""; // 编码
 	private boolean isUseJs = true; // js
 	private String template ; // 模板
 	//private BrowserVersion bv = BrowserVersion.FIREFOX_3_6;
@@ -25,7 +25,7 @@ public class CrawlParameter  implements Serializable{
 	private String reqmethod; //访问get 或 post 方式 
 	private Map<String,String> reqmap; // 请求参数
 	private String referrer; //设置 来源网站。
-	private Map<String,String> cookie; 
+	private Set<NewCookie> cookie; 
 	private Map<String,String> header;
 	private boolean isUseWebClient;
 	private WebClient webClient;
@@ -55,10 +55,10 @@ public class CrawlParameter  implements Serializable{
 	        }
 	}
 	
-	public Map<String, String> getCookie() {
+	public Set<NewCookie> getCookie() {
 		return cookie;
 	}
-	public void setCookie(Map<String, String> cookie) {
+	public void setCookie(Set<NewCookie> cookie) {
 		this.cookie = cookie;
 	}
 	public Map<String, String> getHeader() {
